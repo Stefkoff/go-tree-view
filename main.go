@@ -64,11 +64,37 @@ func ListDirContent(dirName string, deep int, maxDepth int, showHiddenFile bool)
 
 	sort.Sort(ByFileType(dir))
 	for _, entry := range dir {
+		entryName := entry.Name()
+
+		if entryName[0] == '.' && !showHiddenFile {
+			continue
+		}
 		if entry.IsDir() {
-			ListDirContent(path.Join(dirName, entry.Name()), deep+1, maxDepth, showHiddenFile)
+			ListDirContent(path.Join(dirName, entryName), deep+1, maxDepth, showHiddenFile)
 		} else {
+			var isExecutable = false
+			if entryName == "test.sh" {
+				fInto, err := entry.Info()
+
+				if err == nil && fInto.Mode()&0100 != 0 {
+					isExecutable = true
+				}
+			}
+			var symLinkSource = ""
+			var extraColor = ""
+			if entry.Type() == fs.ModeSymlink {
+				smLink, err := os.Readlink(path.Join(dirName, entryName))
+
+				if err == nil {
+					extraColor = "\033[36m"
+					symLinkSource = " -> " + smLink
+				}
+			} else if isExecutable {
+				extraColor = "\033[32m"
+			}
 			PrintTail(deep)
-			fmt.Printf("|---%s\n", entry.Name())
+
+			fmt.Printf("|---%s%s\033[0m%s\n", extraColor, entryName, symLinkSource)
 		}
 	}
 }
@@ -84,7 +110,7 @@ func PrintHelp() {
 func CheckForValidPath(pathName string) (string, bool) {
 	curPath, err := os.Getwd()
 
-	var pathSeparator string = "/"
+	var pathSeparator = "/"
 
 	if err != nil {
 		return "", false
@@ -115,11 +141,10 @@ func CheckDirExists(pathName string) bool {
 }
 
 func main() {
-
 	args := os.Args[1:]
 	argc := len(args)
 	var (
-		maxDeep         int = 0
+		maxDeep         = 0
 		pathName        string
 		showHiddenFiles bool
 	)
@@ -167,5 +192,4 @@ func main() {
 	}
 
 	ListDirContent(pathName, 0, maxDeep, showHiddenFiles)
-	//ListDirContent("C:\\Users\\stefkoff\\CLionProjects", 0)
 }
