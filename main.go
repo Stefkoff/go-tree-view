@@ -6,7 +6,6 @@ import (
 	"os"
 	"path"
 	"path/filepath"
-	"runtime"
 	"sort"
 	"strconv"
 	"strings"
@@ -87,10 +86,6 @@ func CheckForValidPath(pathName string) (string, bool) {
 
 	var pathSeparator string = "/"
 
-	if runtime.GOOS == "windows" {
-		pathSeparator = "\\"
-	}
-
 	if err != nil {
 		return "", false
 	}
@@ -100,14 +95,23 @@ func CheckForValidPath(pathName string) (string, bool) {
 		if err != nil {
 			return "", false
 		}
-	} else if strings.Contains(pathName, "../") || strings.Contains(pathName, "..\\") {
+	} else if strings.Contains(pathName, ".."+string(os.PathSeparator)) {
 		pathName, err = filepath.Abs(curPath + pathSeparator + pathName)
 
 		if err != nil {
 			return "", false
 		}
 	}
+	if !CheckDirExists(pathName) {
+		return "", false
+	}
 	return pathName, true
+}
+
+func CheckDirExists(pathName string) bool {
+	_, err := os.ReadDir(pathName)
+
+	return err == nil
 }
 
 func main() {
@@ -117,7 +121,7 @@ func main() {
 	var (
 		maxDeep         int = 0
 		pathName        string
-		showHiidenFiles bool
+		showHiddenFiles bool
 	)
 
 	if argc < 1 {
@@ -134,14 +138,14 @@ func main() {
 		pathName = absolutPath
 
 	} else {
-		absoltutePath, exists := CheckForValidPath(args[argc-1])
+		absolutePath, exists := CheckForValidPath(args[argc-1])
 
 		if exists == false {
 			fmt.Println("Invalid path provided")
 			PrintHelp()
 			return
 		}
-		pathName = absoltutePath
+		pathName = absolutePath
 		for i, arg := range args {
 			if arg == "-d" && len(args)-1 > i+1 {
 				mDeep, err := strconv.Atoi(args[i+1])
@@ -153,7 +157,7 @@ func main() {
 				maxDeep = mDeep
 				continue
 			} else if arg == "-h" {
-				showHiidenFiles = true
+				showHiddenFiles = true
 				continue
 			} else if arg == "--help" {
 				PrintHelp()
@@ -162,6 +166,6 @@ func main() {
 		}
 	}
 
-	ListDirContent(pathName, 0, maxDeep, showHiidenFiles)
+	ListDirContent(pathName, 0, maxDeep, showHiddenFiles)
 	//ListDirContent("C:\\Users\\stefkoff\\CLionProjects", 0)
 }
