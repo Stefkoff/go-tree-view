@@ -73,12 +73,10 @@ func ListDirContent(dirName string, deep int, maxDepth int, showHiddenFile bool)
 			ListDirContent(path.Join(dirName, entryName), deep+1, maxDepth, showHiddenFile)
 		} else {
 			var isExecutable = false
-			if entryName == "test.sh" {
-				fInto, err := entry.Info()
+			fInto, err := entry.Info()
 
-				if err == nil && fInto.Mode()&0100 != 0 {
-					isExecutable = true
-				}
+			if err == nil && fInto.Mode()&0100 != 0 {
+				isExecutable = true
 			}
 			var symLinkSource = ""
 			var extraColor = ""
