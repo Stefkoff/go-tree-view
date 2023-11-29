@@ -50,16 +50,6 @@ func PrintTail(deep int) {
 	}
 }
 
-func HasFolderInside(dir []fs.DirEntry) bool {
-	for _, entry := range dir {
-		if entry.IsDir() {
-			return true
-		}
-	}
-
-	return false
-}
-
 func ListDirContent(dirName string, deep int, maxDepth int, showHiddenFile bool) {
 	if maxDepth > 0 && deep > maxDepth {
 		return
