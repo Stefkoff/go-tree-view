@@ -9,6 +9,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"unicode/utf8"
 )
 
 func check(e error) {
@@ -36,15 +37,27 @@ func (a ByFileType) Less(i, j int) bool {
 func (a ByFileType) Swap(i, j int) { a[i], a[j] = a[j], a[i] }
 
 func PrintTail(deep int) {
+	boxDrawingsLightVertical := []byte{0xE2, 0x94, 0x82}
+	boxDrawingsLightVerticalDecoded, _ := utf8.DecodeRune(boxDrawingsLightVertical)
 	for d := 0; d < deep; d++ {
 		if d == 0 {
-			fmt.Print("|    ")
+			fmt.Printf("%c   ", boxDrawingsLightVerticalDecoded)
 		} else if d > 0 && deep%d == 0 {
-			fmt.Print("|   ")
+			fmt.Printf("%c   ", boxDrawingsLightVerticalDecoded)
 		} else if d > deep-4 {
-			fmt.Print("|   ")
+			fmt.Printf("%c   ", boxDrawingsLightVerticalDecoded)
 		}
 	}
+}
+
+func HasFolderInside(dir []fs.DirEntry) bool {
+	for _, entry := range dir {
+		if entry.IsDir() {
+			return true
+		}
+	}
+
+	return false
 }
 
 func ListDirContent(dirName string, deep int, maxDepth int, showHiddenFile bool) {
@@ -60,10 +73,14 @@ func ListDirContent(dirName string, deep int, maxDepth int, showHiddenFile bool)
 		dirNameToShow = filepath.Base(dirNameToShow)
 	}
 
-	fmt.Printf("\033[34m%s\n\033[0m", dirNameToShow)
+	boxDrawingsLightUpRight := []byte{0xE2, 0x94, 0x94}
+	boxDrawingsLightHorizontal := []byte{0xE2, 0x94, 0x80}
+	boxDrawingsLightUpRightDecoded, _ := utf8.DecodeRune(boxDrawingsLightUpRight)
+	boxDrawingsLightHorizontalDecoded, _ := utf8.DecodeRune(boxDrawingsLightHorizontal)
+	fmt.Printf("%c%c%c \033[34m%s\n\033[0m", boxDrawingsLightUpRightDecoded, boxDrawingsLightHorizontalDecoded, boxDrawingsLightHorizontalDecoded, dirNameToShow)
 
 	sort.Sort(ByFileType(dir))
-	for _, entry := range dir {
+	for index, entry := range dir {
 		entryName := entry.Name()
 
 		if entryName[0] == '.' && !showHiddenFile {
@@ -91,8 +108,23 @@ func ListDirContent(dirName string, deep int, maxDepth int, showHiddenFile bool)
 				extraColor = "\033[32m"
 			}
 			PrintTail(deep)
+			boxDrawingsLightVertical := []byte{0xE2, 0x94, 0x82}
+			boxDrawingLighhtVerticalRight := []byte{0xE2, 0x94, 0x9C}
+			boxDrawingsLightVerticalDecoded, _ := utf8.DecodeRune(boxDrawingsLightVertical)
+			boxDrawingLighhtVerticalRightDecoded, _ := utf8.DecodeRune(boxDrawingLighhtVerticalRight)
+			if len(dir) > 1 {
+				fmt.Printf("%c   ", boxDrawingsLightVerticalDecoded)
+			} else {
+				fmt.Printf("    ")
+			}
 
-			fmt.Printf("|---%s%s\033[0m%s\n", extraColor, entryName, symLinkSource)
+			if index == len(dir)-1 {
+				fmt.Printf("%c", boxDrawingsLightUpRightDecoded)
+			} else {
+				fmt.Printf("%c", boxDrawingLighhtVerticalRightDecoded)
+			}
+
+			fmt.Printf("%c%c %s%s\033[0m%s\n", boxDrawingsLightHorizontalDecoded, boxDrawingsLightHorizontalDecoded, extraColor, entryName, symLinkSource)
 		}
 	}
 }
